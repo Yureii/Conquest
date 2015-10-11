@@ -1,82 +1,83 @@
-var noise = generateNoise();
 
-var canvas = document.getElementById('display');
-var context = canvas.getContext('2d');
+var Utils = {
+  MidpointDisplacementMapGenerator: function(setSize, displacement) {
+      var
+          size = setSize,
+          map = [],
 
-for (x = 0; x < noise.length; x++) {
-    for (y = 0; y < noise[x].length; y++) {
-        var color = Math.round((255 * noise[x][y]));
+          // the value the displacement changes with each recursion
+          // each recursion cuts the width in half, so a sensible value
+          // may be 2. a value of 1. makes it very noisy,
+          // but all values > 0 are possible
+          d = displacement;
 
-        context.fillStyle = "rgb(" + color + ", " + color + ", " + color + ")";
-        context.fillRect(x, y, 1, 1);
-    }
-}
+      // set the center point and the top, left, right and lower point
+      // and recurse over the 4 new squares
+      var divide = function (x1, y1, x2, y2, dh) {
+          var dx = x2-x1,
+              dy = y2-y1,
+              cx = x1+dx/2,
+              cy = y1+dy/2,
+              d2 = dh/2;
 
-function generateNoise() {
-    var noiseArr = new Array();
+          if (dx > 1) {
+              // generate center pt
+              map[cy][cx] = (map[y1][x1] + map[y2][x2] + map[y1][x2] + map[y2][x1])/4 + Math.random() * dh - d2;
 
-    for (i = 0; i <= 5; i++) {
-        noiseArr[i] = new Array();
+              // generate top, bottom, left and right pts
+              if (map[y1][cx] === undefined) map[y1][cx] = (map[y1][x1] + map[y1][x2])/2 + Math.random() * dh - d2;
+              if (map[y2][cx] === undefined) map[y2][cx] = (map[y2][x1] + map[y2][x2])/2 + Math.random() * dh - d2;
+              if (map[cy][x1] === undefined) map[cy][x1] = (map[y1][x1] + map[y2][x1])/2 + Math.random() * dh - d2;
+              if (map[cy][x2] === undefined) map[cy][x2] = (map[y1][x2] + map[y2][x2])/2 + Math.random() * dh - d2;
 
-        for (j = 0; j <= 5; j++) {
-            var height = Math.random();
+              var nh = dh/d;
 
-            if (i == 0 || j == 0 || i == 5 || j == 5) height = 1;
+              // recurse!
+              divide(x1, y1, cx, cy, nh);
+              divide(cx, y1, x2, cy, nh);
+              divide(x1, cy, cx, y2, nh);
+              divide(cx, cy, x2, y2, nh);
+          }
+      }
 
-            noiseArr[i][j] = height;
-        }
-    }
+      // adjusts values to between 0 and mdiff (e.g. 0 and 255 for drawing)
+      var adjust = function(map, mdiff) {
+          var s = false, b = false, d;
+          for (var y=0; y<map.length; y++)
+              for (var x=0; x<map[y].length; x++) {
+                  if (map[y][x] < s || s === false)
+                      s = map[y][x];
 
-    return (flatten(interpolate(noiseArr)));
-}
+                  if (map[y][x] > b || b === false)
+                      b = map[y][x];
+              }
 
-function interpolate(points) {
-    var noiseArr = new Array()
-    var x = 0;
-    var y = 0;
+          d = b-s;
 
-    for (i = 0; i < 150; i++) {
-        if (i != 0 && i % 30 == 0) x++;
+          for (var y=0; y<map.length; y++)
+              for (var x=0; x<map[y].length; x++) {
+                  map[y][x] = (map[y][x]-s) / d * mdiff;
+              }
 
-        noiseArr[i] = new Array();
-        for (j = 0; j < 150; j++) {
+          return map;
+      }
 
-            if (j != 0 && j % 30 == 0) y++;
+      // prepare
+      this.generate = function (ceil) {
+          // init array
+          for (var i=0; i<size; i++)
+              map[i] = [];
 
-            var mu_x = (i % 30) / 30;
-            var mu_2 = (1 - Math.cos(mu_x * Math.PI)) / 2;
+          // preset the corner values
+          map[0][0] = Math.random();
+          map[0][size-1] = Math.random();
+          map[size-1][0] = Math.random();
+          map[size-1][size-1] = Math.random();
 
-            var int_x1 = points[x][y] * (1 - mu_2) + points[x + 1][y] * mu_2;
-            var int_x2 = points[x][y + 1] * (1 - mu_2) + points[x + 1][y + 1] * mu_2;
+          // start
+          divide(0, 0, size-1, size-1, 1);
 
-            var mu_y = (j % 30) / 30;
-            var mu_2 = (1 - Math.cos(mu_y * Math.PI)) / 2;
-            var int_y = int_x1 * (1 - mu_2) + int_x2 * mu_2;
-
-            noiseArr[i][j] = int_y;
-        }
-        y = 0;
-    }
-    return (noiseArr);
-}
-
-function flatten(points) {
-    var noiseArr = new Array()
-    for (i = 0; i < points.length; i++) {
-        noiseArr[i] = new Array()
-        for (j = 0; j < points[i].length; j++) {
-
-            if (points[i][j] < 0.2) noiseArr[i][j] = 0;
-
-            else if (points[i][j] < 0.4) noiseArr[i][j] = 0.2;
-
-            else if (points[i][j] < 0.6) noiseArr[i][j] = 0.4;
-
-            else if (points[i][j] < 0.8) noiseArr[i][j] = 0.6;
-
-            else noiseArr[i][j] = 1;
-        }
-    }
-
-    return (noiseArr);
+          return adjust(map, ceil);
+      }
+  },
 }
