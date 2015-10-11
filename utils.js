@@ -1,156 +1,81 @@
-var MyMath = {
-  min_2: function(a, b) {
-    if(a<b) return a;
-    return b;
-  },
+var noise = generateNoise();
+var canvas = document.getElementById('display');
+var context = canvas.getContext('2d');
 
-  min_3: function(a, b, c) {
-    if(MyMath.min(a,b) < c) return MyMath.min(a,b);
-    return c;
-  },
+for (x = 0; x < noise.length; x++) {
+    for (y = 0; y < noise[x].length; y++) {
+        var color = Math.round((255 * noise[x][y]));
 
-  max: function(a, b) {
-    if(a>b) return a;
-    return b;
-  },
-
-  pow: function(a, b) {
-    if(b>1) return a*Math.pow(a, b-1);
-    else return a;
-  },
-
-  random_ab: function(start, end) {
-    return start + Math.random()*(end - start);
-  },
-
-  random_range: function(range) {
-    return Math.random() * range;
-  }
-
+        context.fillStyle = "rgb(" + color + ", " + color + ", " + color + ")";
+        context.fillRect(x, y, 1, 1);
+    }
 }
 
-var MDP = {
-  smoothness: 2,
-  // Thresholds which determine cutoffs for different terrain types
-  threshold: {
-    deepWater: 0.35,
-    shallowWater: 0.40,
-    desert: 0.45,
-    plains: 0.50,
-    grassland: 0.60,
-    forest: 0.78,
-    hills: 0.84,
-    mountain: 0.96
-  },
+function generateNoise() {
+    var noiseArr = new Array();
 
-  getMap: function(n, wmult, hmult) {
-    // Get the dimensions of the Map
-    var power = MyMath.pow(2, n);
-    var width = wmult * power + 1;
-    var height = hmult * power + 1;
-    window.alert(width + ' ' + height);
+    for (i = 0; i <= 5; i++) {
+        noiseArr[i] = new Array();
 
-    // initialize arrays to hold values
-    var map = [];
-    for(var i = 0; i < width; i++) {
-      map[i] = [];
-      for (var j = 0; j < height; j++) {
-         map[i][j] = 0;
-      }
-    }
-    var returnmap = [];
-    for(var i = 0; i < width; i++) {
-      returnmap[i] = [];
-      for (var j = 0; j < height; j++) {
-         returnmap[i][j] = 0;
-      }
-    }
+        for (j = 0; j <= 5; j++) {
+            var height = Math.random();
 
-    var step = power / 2;
-    var sum;
-    var count;
+            if (i == 0 || j == 0 || i == 5 || j == 5) height = 1;
 
-    // h determines the fineness of the scale if it is working on
-    // After every step, h is decreased by a factor of "smoothness"
-    var h = 1;
-
-    // initialize the grid points
-    for(var i = 0; i < width; i+=2*step) {
-      for(var j = 0; j < height; j+=2*step) {
-        map[i][j] = MyMath.random_range(2*h);
-      }
-    }
-
-    // Do the rest of the magic
-    while(step > 0) {
-      // Diamond step
-      for(var x = step; x < width-1; x += 2*step) {
-        for(var y = step; y < height-1; y += 2*step) {
-            sum = map[x-step][y-step] + //down-left
-                map[x-step][y+step] + //up-left
-                map[x+step][y-step] + //down-right
-                map[x+step][y+step];  //up-right
-            map[x][y] = sum/4 + MyMath.random_ab(-h,h);
-            console.log(x + ' ' + y);
+            noiseArr[i][j] = height;
         }
-      } // END Diamond step
+    }
 
-      // Square step
-      for(var x = 0; x < width; x += step) {
-        for(var y = step*(1-(x/step)%2); y < height; y += 2*step) {
-          sum = 0;
-          count = 0;
-          if (x-step >= 0) {
-            sum+=map[x-step][y];
-            count++;
-          }
-          if (x+step < width) {
-            sum+=map[x+step][y];
-            count++;
-          }
-          if (y-step >= 0) {
-            sum+=map[x][y-step];
-            count++;
-          }
-          if (y+step < height) {
-            sum+=map[x][y+step];
-            count++;
-          }
-          if (count > 0) map[x][y] = sum/count + MyMath.random_ab(-h,h);
-          else map[x][y] = 0;
+    return (flatten(interpolate(noiseArr)));
+}
+
+function interpolate(points) {
+    var noiseArr = new Array()
+    var x = 0;
+    var y = 0;
+
+    for (i = 0; i < 150; i++) {
+        if (i != 0 && i % 30 == 0) x++;
+
+        noiseArr[i] = new Array();
+        for (j = 0; j < 150; j++) {
+
+            if (j != 0 && j % 30 == 0) y++;
+
+            var mu_x = (i % 30) / 30;
+            var mu_2 = (1 - Math.cos(mu_x * Math.PI)) / 2;
+
+            var int_x1 = points[x][y] * (1 - mu_2) + points[x + 1][y] * mu_2;
+            var int_x2 = points[x][y + 1] * (1 - mu_2) + points[x + 1][y + 1] * mu_2;
+
+            var mu_y = (j % 30) / 30;
+            var mu_2 = (1 - Math.cos(mu_y * Math.PI)) / 2;
+            var int_y = int_x1 * (1 - mu_2) + int_x2 * mu_2;
+
+            noiseArr[i][j] = int_y;
         }
-      } // END Square step
-      h /= MDP.smoothness;
-      step /= 2;
-    } // end while
+        y = 0;
+    }
+    return (noiseArr);
+}
 
-    // Normalize the map
-    var max = Number.MAX_VALUE;
-    var min = Number.MIN_VALUE;
-    var row = new Array();
-    for(row in map) {
-      for(var d in row) {
-        if(d > max) max = d;
-        if(d < min) min = d;
-      }
+function flatten(points) {
+    var noiseArr = new Array()
+    for (i = 0; i < points.length; i++) {
+        noiseArr[i] = new Array()
+        for (j = 0; j < points[i].length; j++) {
+
+            if (points[i][j] < 0.2) noiseArr[i][j] = 0;
+
+            else if (points[i][j] < 0.4) noiseArr[i][j] = 0.2;
+
+            else if (points[i][j] < 0.6) noiseArr[i][j] = 0.4;
+
+            else if (points[i][j] < 0.8) noiseArr[i][j] = 0.6;
+
+            else noiseArr[i][j] = 1;
+        }
     }
 
-    // Use the thresholds to fill in the return map
-    for(var row = 0; row < map.length; row++) {
-      for(var col = 0; col < map[row].length; col++) {
-        map[row][col] = (map[row][col]-min)/(max-min);
-        if (map[row][col] < MDP.threshold.deepWater) returnMap[row][col] = 0;
-        else if (map[row][col] < MDP.threshold.shallowWater) returnMap[row][col] = 1;
-        else if (map[row][col] < MDP.threshold.desert) returnMap[row][col] = 2;
-        else if (map[row][col] < MDP.threshold.plains) returnMap[row][col] = 3;
-        else if (map[row][col] < MDP.threshold.grassland) returnMap[row][col] = 4;
-        else if (map[row][col] < MDP.threshold.forest) returnMap[row][col] = 5;
-        else if (map[row][col] < MDP.threshold.hills) returnMap[row][col] = 6;
-        else if (map[row][col] < MDP.threshold.mountainsr) returnMap[row][col] = 7;
-        else returnMap[row][col] = 8;
-      }
-    }
-
-    return returnmap;
-  }
+    return (noiseArr);
 }
