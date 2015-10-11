@@ -1,0 +1,67 @@
+html { font-size: 100%; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;}
+html, button, input, select, textarea { font-family: sans-serif; color: #222; }
+html, body{ height:100%; background:#82CAE2; -webkit-font-smoothing: antialiased;}
+html {
+	background: url('Images/bg_main.jpg') repeat;
+}
+body {
+	background: url('Images/bg_main.jpg') repeat;
+	width: 100%;
+	margin: auto;
+}
+
+header {
+  height: 20px;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  background: #221E1D;
+  margin: 0px auto;
+  text-align: center;
+}
+
+#wood, #iron, #wheat, #workers {
+  display: inline;
+  min-width: 100px;
+  margin: 10px;
+  padding: 10px;
+}
+
+#woodValue, #ironValue, #wheatValue, #workersValue {
+  display:inline;
+  color: #ECEAE0;
+  font-size: 12px;
+}
+
+nav {
+  height: 18px;
+  position: fixed;
+  width: 100%;
+  top: 20px;
+  left: 0;
+  margin: 0px auto;
+  text-align: center;
+  background-color: #D3D3D3;
+  border-bottom: 1px solid #A9A9A9;
+}
+nav a {
+  margin-left: 10px;
+  margin-right: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #696969;
+  font-style: normal;
+  text-decoration: none;
+  font-size: 12px;
+}
+
+nav a:hover {
+  color: #221E1D;
+}
+
+section#Buildings {
+    height: 2000px;
+    margin: 0px auto;
+    margin-top: 40px;
+    padding: 10px;
+}
