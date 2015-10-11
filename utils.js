@@ -1,120 +1,82 @@
-function Terrain(detail) {
-  this.size = Math.pow(2, detail) + 1;
-  this.max = this.size - 1;
-  this.map = new Float32Array(this.size * this.size);
+var noise = generateNoise();
+
+var canvas = document.getElementById('display');
+var context = canvas.getContext('2d');
+
+for (x = 0; x < noise.length; x++) {
+    for (y = 0; y < noise[x].length; y++) {
+        var color = Math.round((255 * noise[x][y]));
+
+        context.fillStyle = "rgb(" + color + ", " + color + ", " + color + ")";
+        context.fillRect(x, y, 1, 1);
+    }
 }
 
-Terrain.prototype.get = function(x, y) {
-  if (x < 0 || x > this.max || y < 0 || y > this.max) return -1;
-  return this.map[x + this.size * y];
-};
+function generateNoise() {
+    var noiseArr = new Array();
 
-Terrain.prototype.set = function(x, y, val) {
-  this.map[x + this.size * y] = val;
-};
+    for (i = 0; i <= 5; i++) {
+        noiseArr[i] = new Array();
 
-Terrain.prototype.generate = function(roughness) {
-  var self = this;
+        for (j = 0; j <= 5; j++) {
+            var height = Math.random();
 
-  this.set(0, 0, self.max);
-  this.set(this.max, 0, self.max / 2);
-  this.set(this.max, this.max, 0);
-  this.set(0, this.max, self.max / 2);
+            if (i == 0 || j == 0 || i == 5 || j == 5) height = 1;
 
-  divide(this.max);
-
-  function divide(size) {
-    var x, y, half = size / 2;
-    var scale = roughness * size;
-    if (half < 1) return;
-
-    for (y = half; y < self.max; y += size) {
-      for (x = half; x < self.max; x += size) {
-        square(x, y, half, Math.random() * scale * 2 - scale);
-      }
+            noiseArr[i][j] = height;
+        }
     }
-    for (y = 0; y <= self.max; y += half) {
-      for (x = (y + half) % size; x <= self.max; x += size) {
-        diamond(x, y, half, Math.random() * scale * 2 - scale);
-      }
+
+    return (flatten(interpolate(noiseArr)));
+}
+
+function interpolate(points) {
+    var noiseArr = new Array()
+    var x = 0;
+    var y = 0;
+
+    for (i = 0; i < 150; i++) {
+        if (i != 0 && i % 30 == 0) x++;
+
+        noiseArr[i] = new Array();
+        for (j = 0; j < 150; j++) {
+
+            if (j != 0 && j % 30 == 0) y++;
+
+            var mu_x = (i % 30) / 30;
+            var mu_2 = (1 - Math.cos(mu_x * Math.PI)) / 2;
+
+            var int_x1 = points[x][y] * (1 - mu_2) + points[x + 1][y] * mu_2;
+            var int_x2 = points[x][y + 1] * (1 - mu_2) + points[x + 1][y + 1] * mu_2;
+
+            var mu_y = (j % 30) / 30;
+            var mu_2 = (1 - Math.cos(mu_y * Math.PI)) / 2;
+            var int_y = int_x1 * (1 - mu_2) + int_x2 * mu_2;
+
+            noiseArr[i][j] = int_y;
+        }
+        y = 0;
     }
-    divide(size / 2);
-  }
+    return (noiseArr);
+}
 
-  function average(values) {
-    var valid = values.filter(function(val) { return val !== -1; });
-    var total = valid.reduce(function(sum, val) { return sum + val; }, 0);
-    return total / valid.length;
-  }
+function flatten(points) {
+    var noiseArr = new Array()
+    for (i = 0; i < points.length; i++) {
+        noiseArr[i] = new Array()
+        for (j = 0; j < points[i].length; j++) {
 
-  function square(x, y, size, offset) {
-    var ave = average([
-      self.get(x - size, y - size),   // upper left
-      self.get(x + size, y - size),   // upper right
-      self.get(x + size, y + size),   // lower right
-      self.get(x - size, y + size)    // lower left
-    ]);
-    self.set(x, y, ave + offset);
-  }
+            if (points[i][j] < 0.2) noiseArr[i][j] = 0;
 
-  function diamond(x, y, size, offset) {
-    var ave = average([
-      self.get(x, y - size),      // top
-      self.get(x + size, y),      // right
-      self.get(x, y + size),      // bottom
-      self.get(x - size, y)       // left
-    ]);
-    self.set(x, y, ave + offset);
-  }
-};
+            else if (points[i][j] < 0.4) noiseArr[i][j] = 0.2;
 
-Terrain.prototype.draw = function(ctx, width, height) {
-  var self = this;
-  var waterVal = this.size * 0.3;
+            else if (points[i][j] < 0.6) noiseArr[i][j] = 0.4;
 
-  for (var y = 0; y < this.size; y++) {
-    for (var x = 0; x < this.size; x++) {
-      var val = this.get(x, y);
-      var top = project(x, y, val);
-      var bottom = project(x + 1, y, 0);
-      var water = project(x, y, waterVal);
-      var style = brightness(x, y, this.get(x + 1, y) - val);
+            else if (points[i][j] < 0.8) noiseArr[i][j] = 0.6;
 
-      rect(top, bottom, style);
-      rect(water, bottom, 'rgba(50, 150, 200, 0.15)');
+            else noiseArr[i][j] = 1;
+        }
     }
-  }
 
-  function rect(a, b, style) {
-    if (b.y < a.y) return;
-    ctx.fillStyle = style;
-    ctx.fillRect(a.x, a.y, b.x - a.x, b.y - a.y);
-  }
-
-  function brightness(x, y, slope) {
-    if (y === self.max || x === self.max) return '#000';
-    var b = ~~(slope * 50) + 128;
-    return ['rgba(', b, ',', b, ',', b, ',1)'].join('');
-  }
-
-  function iso(x, y) {
-    return {
-      x: 0.5 * (self.size + x - y),
-      y: 0.5 * (x + y)
-    };
-  }
-
-  function project(flatX, flatY, flatZ) {
-    var point = iso(flatX, flatY);
-    var x0 = width * 0.5;
-    var y0 = height * 0.2;
-    var z = self.size * 0.5 - flatZ + point.y * 0.75;
-    var x = (point.x - self.size * 0.5) * 6;
-    var y = (self.size - point.y) * 0.005 + 1;
-
-    return {
-      x: x0 + x / y,
-      y: y0 + z / y
-    };
-  }
-};
+    return (noiseArr);
+}

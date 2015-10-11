@@ -101,11 +101,4 @@ var Engine = {
 window.onload = function() {
     Engine.Init();
     console.log("Engine Started.");
-
-    var ctx = display.getContext('2d');
-    var width = display.width = window.innerWidth;
-    var height = display.height = window.innerHeight;
-    var terrain = new Terrain(9);
-    terrain.generate(0.7);
-    terrain.draw(ctx, width, height);
 }
