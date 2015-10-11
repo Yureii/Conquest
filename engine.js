@@ -47,12 +47,19 @@ var Engine = {
         }
     },
 
+    // Player
+    Player: {
+      buildings: null,
+      ressources: null
+    },
+
     // Display
     Display: {
         wood:       null,
         iron:       null,
         wheat:      null,
-        workers:    null
+        workers:    null,
+        map:        null
     },
 
     DisplayRessources: function() {
@@ -90,9 +97,48 @@ var Engine = {
         Engine.Display.iron = document.getElementById("ironValue");
         Engine.Display.wheat = document.getElementById("wheatValue");
         Engine.Display.workers = document.getElementById("workersValue");
+        Engine.Display.map = document.getElementById("display");
 
         Engine.DisplayRessources();
         Engine.IdleTimer();
+        window.setInterval(Engine.Save, 15000);
+        if(window.localStorage.getItem("Savefile")) Engine.Load();
+    },
+
+    /* Save function */
+    Save: function() {
+      Engine.Player.buildings = Engine.Buildings;
+      Engine.Player.ressources = Engine.Ressources;
+      var tmpSaveFile = JSON.stringify(Engine.Player);
+      // Create the save file.
+      window.localStorage.setItem("Savefile", tmpSaveFile);
+      // Use the SetStatus function to make a quick notification tha the game is saved
+      console.log("Game saved.");
+    },
+
+    /* Load funciton */
+    Load: function() {
+      // Check to see if the savefile exists
+      if(!window.localStorage.getItem("Savefile")) Engine.SetStatus("No save file present.");
+      else {
+        // Grab and parse the Savefile
+        var tmpSaveFile = window.localStorage.getItem("Savefile");
+        Engine.Player = JSON.parse(tmpSaveFile);
+        Engine.Buildings = Engine.Player.buildings;
+        Engine.Ressources = Engine.Player.ressources;
+        Engine.DisplayRessources();
+        console.log("Game loaded successfully.")
+      }
+    },
+    // Delete
+    Delete: function() {
+      if(!window.localStorage.getItem("Savefile")) {
+        console.log("No savefile present.");
+      }
+      else {
+        window.localStorage.removeItem("Savefile");
+        console.log("Savefile removed.");
+      }
     }
 };
 
@@ -101,4 +147,11 @@ var Engine = {
 window.onload = function() {
     Engine.Init();
     console.log("Engine Started.");
+
+    var ctx = Engine.Display.map.getContext("2d");
+    var size = 513,
+        variability = 1.5,
+        generator = new Utils.MidpointDisplacementMapGenerator(size, variability),
+        map = generator.generate(255);
+
 }
