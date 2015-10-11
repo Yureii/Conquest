@@ -1,4 +1,5 @@
 var noise = generateNoise();
+
 var canvas = document.getElementById('display');
 var context = canvas.getContext('2d');
 
