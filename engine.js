@@ -13,7 +13,10 @@ var Engine = {
     timeThen: new Date().getTime(),
     timeNow:  new Date().getTime(),
     ticks: 0,
-    idleSpeed: 3000,
+    idleSpeed: 1000,
+
+    // Map
+    map: null,
 
     // Ressources
     Ressources: {
@@ -50,7 +53,8 @@ var Engine = {
     // Player
     Player: {
       buildings: null,
-      ressources: null
+      ressources: null,
+      mapArray: null
     },
 
     // Display
@@ -90,6 +94,65 @@ var Engine = {
         setTimeout(Engine.IdleTimer, idleTime);
     },
 
+    LoadImages: function(sources, callback) {
+      var images = {};
+      var loadedImages = 0;
+      var numImages = 0;
+
+      // Get number of sources
+      for(var src in sources) { numImages++; }
+      for(var src in sources) {
+        images[src] = new Image();
+        images[src].onload = function() {
+          if(++loadedImages >= numImages) {
+            callback(images);
+          }
+        };
+        images[src].src = sources[src];
+      }
+    },
+
+    DrawMap: function() {
+      var ctx = Engine.Display.map.getContext("2d");
+      var tiles = {
+        deepWater: "Images/hex_0.png",
+        shallowWater: "Images/hex_1.png",
+        sand: "Images/hex_2.png",
+        valley: "Images/hex_3.png",
+        grassland: "Images/hex_4.png",
+        forest: "Images/hex_5.png",
+        desert: "Images/hex_6.png",
+        hills: "Images/hex_7.png",
+        mountain: "Images/hex_8.png",
+        template: "Images/hex_template.png"
+      };
+
+      var img = new Image();
+      img.src = "Images/hex_1.png";
+
+      var posX = 0, posY = 0;
+
+      Engine.LoadImages(tiles, function(images) {
+        for(var i = 0; i < Engine.map.length; i++) {
+          for(var j = 0; j < Engine.map[i].length; j++) {
+            if(Engine.map[i][j] < 50) ctx.drawImage(images.deepWater, posX, posY, 16, 16);
+            else if(Engine.map[i][j] < 70) ctx.drawImage(images.shallowWater, posX, posY, 16, 16);
+            else if(Engine.map[i][j] < 80) ctx.drawImage(images.sand, posX, posY, 16, 16);
+            else if(Engine.map[i][j] < 95) ctx.drawImage(images.valley, posX, posY, 16, 16);
+            else if(Engine.map[i][j] < 150) ctx.drawImage(images.grassland, posX, posY, 16, 16);
+            else if(Engine.map[i][j] < 180) ctx.drawImage(images.forest, posX, posY, 16, 16);
+            else if(Engine.map[i][j] < 200) ctx.drawImage(images.desert, posX, posY, 16, 16);
+            else if(Engine.map[i][j] < 240) ctx.drawImage(images.hills, posX, posY, 16, 16);
+            else ctx.drawImage(images.mountain, posX, posY, 16, 16);
+
+            posX += 16;
+          }
+          posX = 0;
+          posY += 16;
+        }
+      });
+    },
+
     // Initialize
     Init: function() {
         // Assigning display elements
@@ -98,17 +161,29 @@ var Engine = {
         Engine.Display.wheat = document.getElementById("wheatValue");
         Engine.Display.workers = document.getElementById("workersValue");
         Engine.Display.map = document.getElementById("display");
+        Engine.Display.map.width = Engine.Display.map.height *
+                                    (Engine.Display.map.clientWidth / Engine.Display.map.clientHeight);
+
+
+        var size = 65,
+            variability = 2,
+            generator = new Utils.MidpointDisplacementMapGenerator(size, variability);
+        Engine.map = generator.generate(255);
 
         Engine.DisplayRessources();
         Engine.IdleTimer();
         window.setInterval(Engine.Save, 15000);
         if(window.localStorage.getItem("Savefile")) Engine.Load();
+
+        Engine.DrawMap();
+
     },
 
     /* Save function */
     Save: function() {
       Engine.Player.buildings = Engine.Buildings;
       Engine.Player.ressources = Engine.Ressources;
+      Engine.Player.mapArray = Engine.map;
       var tmpSaveFile = JSON.stringify(Engine.Player);
       // Create the save file.
       window.localStorage.setItem("Savefile", tmpSaveFile);
@@ -126,6 +201,7 @@ var Engine = {
         Engine.Player = JSON.parse(tmpSaveFile);
         Engine.Buildings = Engine.Player.buildings;
         Engine.Ressources = Engine.Player.ressources;
+        Engine.map = Engine.Player.mapArray;
         Engine.DisplayRessources();
         console.log("Game loaded successfully.")
       }
@@ -147,11 +223,4 @@ var Engine = {
 window.onload = function() {
     Engine.Init();
     console.log("Engine Started.");
-
-    var ctx = Engine.Display.map.getContext("2d");
-    var size = 513,
-        variability = 1.5,
-        generator = new Utils.MidpointDisplacementMapGenerator(size, variability),
-        map = generator.generate(255);
-
 }
