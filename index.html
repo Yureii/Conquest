@@ -2,13 +2,13 @@
     <html lang="en">
         <head>
             <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+            <meta name="viewport">
             <title>C O N Q U E S T</title>
             <link rel="stylesheet" type="text/css" href="screen.css" />
             <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
         </head>
         <body>
-            <header>
+            <header id="Ressources">
                 <div id="wood"><img src="Images/Wood_planks.png"><p id="woodValue"></span></div>
                 <div id="iron"><img src="Images/Steel_ingots_icon.png"><span id="ironValue"></span></div>
                 <div id="wheat"><img src="Images/Food_icon_wheat.png"><span id="wheatValue"></span></div>
@@ -26,32 +26,45 @@
             </nav>
             -->
             <aside>
+              <section id="MapCtrl">
+                Map Controls
+                <br>
+                <button type="button" id="zoomin">+</button> <button type="button" id="zoomout">-</button>
+              </section>
               <section id="Production">
-                <div class="building">
-                  <div class="title">Forester Lodge</div>
-                  <hr>
-                  <span class=""></span>
-                </div>
+                <header class="productionHeader">Production</header>
+                <div class="hide">
+                  <div class="building">
+                    <div class="title">Forester Lodge</div>
+                    <hr>
+                    <span class=""></span>
+                  </div>
 
-                <div class="building">
-                  <div class="title">Iron Guarry</div>
-                  <hr>
-                  <span class=""></span>
-                </div>
+                  <div class="building">
+                    <div class="title">Iron Guarry</div>
+                    <hr>
+                    <span class=""></span>
+                  </div>
 
-                <div class="building">
-                  <div class="title">Farm</div>
-                  <hr>
-                  <span class=""></span>
+                  <div class="building">
+                    <div class="title">Farm</div>
+                    <hr>
+                    <span class=""></span>
+                  </div>
                 </div>
-
-                <div class="building">
-                  <div class="title">Houses</div>
-                  <hr>
-                  <span class=""></span>
+              </section>
+              <section id="Population">
+                <header class="populationHeader">Population</header>
+                <div class="hide">
+                  <div class="building">
+                    <div class="title">Houses</div>
+                    <hr>
+                    <span class=""></span>
+                  </div>
                 </div>
               </section>
             </aside>
+
             <content>
               <section id="Map">
                 <canvas id="display" height="1000px" width="1000px"></canvas>

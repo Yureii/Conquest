@@ -7,8 +7,8 @@ var TICKS_PER_SEC = 1;
 var SKIP_TICKS = 1000 / TICKS_PER_SEC;
 var FILTER_PER_SECOND = 3600;
 var FILTER_PER_MINUTE = 60;
-var SCALE = 1/8;
-var TILE_SIZE = 32*SCALE;
+var scale = 1/4;
+var tile_size = 32*scale;
 
 var moveXAmount = 0,
     moveYAmount = 0,
@@ -74,6 +74,18 @@ var Engine = {
         map:        null
     },
 
+    // Clickables
+    Clickables: {
+      zommin: null,
+      zoomout: null
+    },
+
+    UpdateScale: function(s) {
+      scale = s;
+      tile_size = 32*scale;
+      Engine.DrawMap()
+    },
+
     DisplayRessources: function() {
         Engine.Display.wood.innerHTML = Engine.Ressources.wood;
         Engine.Display.iron.innerHTML = Engine.Ressources.iron;
@@ -126,20 +138,20 @@ var Engine = {
       ctx.clearRect(0, 0, Engine.Display.map.width, Engine.Display.map.height);
       for(var i = 0; i < Engine.map.length; i++) {
         for(var j = 0; j < Engine.map[i].length; j++) {
-          if(Engine.map[i][j] < 50) ctx.drawImage(images.deepWater, posX + moveXAmount, posY + moveYAmount, TILE_SIZE, TILE_SIZE);
-          else if(Engine.map[i][j] < 70) ctx.drawImage(images.shallowWater, posX + moveXAmount, posY + moveYAmount, TILE_SIZE, TILE_SIZE);
-          else if(Engine.map[i][j] < 80) ctx.drawImage(images.sand, posX + moveXAmount, posY + moveYAmount, TILE_SIZE, TILE_SIZE);
-          else if(Engine.map[i][j] < 95) ctx.drawImage(images.valley, posX + moveXAmount, posY + moveYAmount, TILE_SIZE, TILE_SIZE);
-          else if(Engine.map[i][j] < 150) ctx.drawImage(images.grassland, posX + moveXAmount, posY + moveYAmount, TILE_SIZE, TILE_SIZE);
-          else if(Engine.map[i][j] < 180) ctx.drawImage(images.forest, posX + moveXAmount, posY + moveYAmount, TILE_SIZE, TILE_SIZE);
-          else if(Engine.map[i][j] < 200) ctx.drawImage(images.desert, posX + moveXAmount, posY + moveYAmount, TILE_SIZE, TILE_SIZE);
-          else if(Engine.map[i][j] < 240) ctx.drawImage(images.hills, posX + moveXAmount, posY + moveYAmount, TILE_SIZE, TILE_SIZE);
-          else ctx.drawImage(images.mountain, posX + moveXAmount, posY + moveYAmount, TILE_SIZE, TILE_SIZE);
+          if(Engine.map[i][j] < 50) ctx.drawImage(images.deepWater, posX + moveXAmount, posY + moveYAmount, tile_size, tile_size);
+          else if(Engine.map[i][j] < 70) ctx.drawImage(images.shallowWater, posX + moveXAmount, posY + moveYAmount, tile_size, tile_size);
+          else if(Engine.map[i][j] < 80) ctx.drawImage(images.sand, posX + moveXAmount, posY + moveYAmount, tile_size, tile_size);
+          else if(Engine.map[i][j] < 95) ctx.drawImage(images.valley, posX + moveXAmount, posY + moveYAmount, tile_size, tile_size);
+          else if(Engine.map[i][j] < 150) ctx.drawImage(images.grassland, posX + moveXAmount, posY + moveYAmount, tile_size, tile_size);
+          else if(Engine.map[i][j] < 180) ctx.drawImage(images.forest, posX + moveXAmount, posY + moveYAmount, tile_size, tile_size);
+          else if(Engine.map[i][j] < 200) ctx.drawImage(images.desert, posX + moveXAmount, posY + moveYAmount, tile_size, tile_size);
+          else if(Engine.map[i][j] < 240) ctx.drawImage(images.hills, posX + moveXAmount, posY + moveYAmount, tile_size, tile_size);
+          else ctx.drawImage(images.mountain, posX + moveXAmount, posY + moveYAmount, tile_size, tile_size);
 
-          posX += TILE_SIZE;
+          posX += tile_size;
         }
         posX = 0;
-        posY += TILE_SIZE;
+        posY += tile_size;
       }
     },
 
@@ -170,6 +182,27 @@ var Engine = {
         Engine.Display.map = document.getElementById("display");
         Engine.Display.map.width = Engine.Display.map.height *
                                     (Engine.Display.map.clientWidth / Engine.Display.map.clientHeight);
+
+        // Assigning Clickables
+        Engine.Clickables.zoomin = document.getElementById("zoomin");
+        Engine.Clickables.zoomout = document.getElementById("zoomout");
+
+        Engine.Clickables.zoomin.addEventListener("click", function() {
+          // We dont want the scale going higher than 1
+          if(scale*2 <= 1) {
+            Engine.UpdateScale(scale*2);
+            console.log(scale);
+          }
+          return false;
+        });
+        Engine.Clickables.zoomout.addEventListener("click", function() {
+          // We dont want the scale going lower than 1/8
+          if(scale/2 >= 1/8) {
+            Engine.UpdateScale(scale/2);
+            console.log(scale);
+          }
+          return false;
+        });
 
         var size = 257,
             variability = 2,
