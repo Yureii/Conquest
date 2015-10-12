@@ -7,6 +7,14 @@ var TICKS_PER_SEC = 1;
 var SKIP_TICKS = 1000 / TICKS_PER_SEC;
 var FILTER_PER_SECOND = 3600;
 var FILTER_PER_MINUTE = 60;
+var SCALE = 1/8;
+var TILE_SIZE = 32*SCALE;
+
+var moveXAmount = 0,
+    moveYAmount = 0,
+    isDragging = false,
+    prevX = 0,
+    prevY = 0;
 
 /* Engine */
 var Engine = {
@@ -112,8 +120,30 @@ var Engine = {
       }
     },
 
-    DrawMap: function() {
+    BuildMap: function(images) {
+      var posX = 0, posY = 0;
       var ctx = Engine.Display.map.getContext("2d");
+      ctx.clearRect(0, 0, Engine.Display.map.width, Engine.Display.map.height);
+      for(var i = 0; i < Engine.map.length; i++) {
+        for(var j = 0; j < Engine.map[i].length; j++) {
+          if(Engine.map[i][j] < 50) ctx.drawImage(images.deepWater, posX + moveXAmount, posY + moveYAmount, TILE_SIZE, TILE_SIZE);
+          else if(Engine.map[i][j] < 70) ctx.drawImage(images.shallowWater, posX + moveXAmount, posY + moveYAmount, TILE_SIZE, TILE_SIZE);
+          else if(Engine.map[i][j] < 80) ctx.drawImage(images.sand, posX + moveXAmount, posY + moveYAmount, TILE_SIZE, TILE_SIZE);
+          else if(Engine.map[i][j] < 95) ctx.drawImage(images.valley, posX + moveXAmount, posY + moveYAmount, TILE_SIZE, TILE_SIZE);
+          else if(Engine.map[i][j] < 150) ctx.drawImage(images.grassland, posX + moveXAmount, posY + moveYAmount, TILE_SIZE, TILE_SIZE);
+          else if(Engine.map[i][j] < 180) ctx.drawImage(images.forest, posX + moveXAmount, posY + moveYAmount, TILE_SIZE, TILE_SIZE);
+          else if(Engine.map[i][j] < 200) ctx.drawImage(images.desert, posX + moveXAmount, posY + moveYAmount, TILE_SIZE, TILE_SIZE);
+          else if(Engine.map[i][j] < 240) ctx.drawImage(images.hills, posX + moveXAmount, posY + moveYAmount, TILE_SIZE, TILE_SIZE);
+          else ctx.drawImage(images.mountain, posX + moveXAmount, posY + moveYAmount, TILE_SIZE, TILE_SIZE);
+
+          posX += TILE_SIZE;
+        }
+        posX = 0;
+        posY += TILE_SIZE;
+      }
+    },
+
+    DrawMap: function() {
       var tiles = {
         deepWater: "Images/hex_0.png",
         shallowWater: "Images/hex_1.png",
@@ -127,30 +157,7 @@ var Engine = {
         template: "Images/hex_template.png"
       };
 
-      var img = new Image();
-      img.src = "Images/hex_1.png";
-
-      var posX = 0, posY = 0;
-
-      Engine.LoadImages(tiles, function(images) {
-        for(var i = 0; i < Engine.map.length; i++) {
-          for(var j = 0; j < Engine.map[i].length; j++) {
-            if(Engine.map[i][j] < 50) ctx.drawImage(images.deepWater, posX, posY, 16, 16);
-            else if(Engine.map[i][j] < 70) ctx.drawImage(images.shallowWater, posX, posY, 16, 16);
-            else if(Engine.map[i][j] < 80) ctx.drawImage(images.sand, posX, posY, 16, 16);
-            else if(Engine.map[i][j] < 95) ctx.drawImage(images.valley, posX, posY, 16, 16);
-            else if(Engine.map[i][j] < 150) ctx.drawImage(images.grassland, posX, posY, 16, 16);
-            else if(Engine.map[i][j] < 180) ctx.drawImage(images.forest, posX, posY, 16, 16);
-            else if(Engine.map[i][j] < 200) ctx.drawImage(images.desert, posX, posY, 16, 16);
-            else if(Engine.map[i][j] < 240) ctx.drawImage(images.hills, posX, posY, 16, 16);
-            else ctx.drawImage(images.mountain, posX, posY, 16, 16);
-
-            posX += 16;
-          }
-          posX = 0;
-          posY += 16;
-        }
-      });
+      Engine.LoadImages(tiles, function(images) {Engine.BuildMap(images);});
     },
 
     // Initialize
@@ -164,8 +171,7 @@ var Engine = {
         Engine.Display.map.width = Engine.Display.map.height *
                                     (Engine.Display.map.clientWidth / Engine.Display.map.clientHeight);
 
-
-        var size = 65,
+        var size = 257,
             variability = 2,
             generator = new Utils.MidpointDisplacementMapGenerator(size, variability);
         Engine.map = generator.generate(255);
@@ -215,9 +221,30 @@ var Engine = {
         window.localStorage.removeItem("Savefile");
         console.log("Savefile removed.");
       }
-    }
+    },
 };
 
+$("#display").mousedown(function() {
+  isDragging = true;
+  prevX = 0; prevY = 0;
+});
+
+$(window).mouseup(function() {
+  isDragging = false;
+  prevX = 0; prevY = 0;
+});
+
+$(window).mousemove(function() {
+  if(isDragging) {
+    if(prevX > 0 || prevY > 0) {
+      moveXAmount += event.pageX - prevX;
+      moveYAmount += event.pageY - prevY;
+      Engine.DrawMap();
+    }
+    prevX = event.pageX;
+    prevY = event.pageY;
+  }
+});
 
 /* onload */
 window.onload = function() {
