@@ -73,7 +73,7 @@ section#Production, section#Population {
   font-size: 12px;
 	width: 100%;
 }
-.productionHeader, .populationHeader {
+#productionHeader, #populationHeader {
 	color: #FFF;
 	background-color: #708090;
 	padding: 5px;

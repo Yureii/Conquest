@@ -77,13 +77,16 @@ var Engine = {
     // Clickables
     Clickables: {
       zommin: null,
-      zoomout: null
+      zoomout: null,
+      prodbuildings: null,
+      popbuildings: null
     },
 
     UpdateScale: function(s) {
       scale = s;
       tile_size = 32*scale;
-      Engine.DrawMap()
+      Engine.DrawMap();
+      console.log('Scale: '+scale);
     },
 
     DisplayRessources: function() {
@@ -182,16 +185,39 @@ var Engine = {
         Engine.Display.map = document.getElementById("display");
         Engine.Display.map.width = Engine.Display.map.height *
                                     (Engine.Display.map.clientWidth / Engine.Display.map.clientHeight);
+        // Hiding elements
+        document.getElementById("prodHide").style.display = 'none';
+        document.getElementById("popHide").style.display = 'none';
 
         // Assigning Clickables
         Engine.Clickables.zoomin = document.getElementById("zoomin");
         Engine.Clickables.zoomout = document.getElementById("zoomout");
+        Engine.Clickables.prodbuildings = document.getElementById("productionHeader");
+        Engine.Clickables.popbuildings = document.getElementById("populationHeader");
+
+
+        // Event listeners
+        Engine.Clickables.prodbuildings.addEventListener('click', function() {
+          if(document.getElementById("prodHide").style.display == 'none') {
+            $("#prodHide").slideDown("slow");
+          }
+          else {
+            $("#prodHide").slideUp("slow");
+          }
+        });
+        Engine.Clickables.popbuildings.addEventListener('click', function() {
+          if(document.getElementById("popHide").style.display == 'none') {
+            $("#popHide").slideDown("slow");
+          }
+          else {
+            $("#popHide").slideUp("slow");
+          }
+        });
 
         Engine.Clickables.zoomin.addEventListener("click", function() {
           // We dont want the scale going higher than 1
           if(scale*2 <= 1) {
             Engine.UpdateScale(scale*2);
-            console.log(scale);
           }
           return false;
         });
@@ -199,7 +225,6 @@ var Engine = {
           // We dont want the scale going lower than 1/8
           if(scale/2 >= 1/8) {
             Engine.UpdateScale(scale/2);
-            console.log(scale);
           }
           return false;
         });
