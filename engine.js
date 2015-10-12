@@ -3,10 +3,6 @@
 */
 
 /* Const */
-var TICKS_PER_SEC = 1;
-var SKIP_TICKS = 1000 / TICKS_PER_SEC;
-var FILTER_PER_SECOND = 3600;
-var FILTER_PER_MINUTE = 60;
 var scale = 1/4;
 var tile_size = 32*scale;
 
@@ -37,12 +33,12 @@ var Engine = {
     // Buildings
     Buildings: {
         lodge: {
-            level:  0,
+            level:  1,
             cost:   { wood: 0, iron: 0, workers: 0},
             prod:   5
         },
         quarry: {
-            level:  0,
+            level:  1,
             cost:   { wood: 0, iron: 0, workers: 0},
             prod:   1
         },
@@ -71,7 +67,28 @@ var Engine = {
         iron:       null,
         wheat:      null,
         workers:    null,
-        map:        null
+        map:        null,
+        lodge: {
+          level: null,
+          cost: {
+            wood: null, iron: null, workers: null
+          },
+          prod: null
+        },
+        quarry: {
+          level: null,
+          cost: {
+            wood: null, iron: null, workers: null
+          },
+          prod: null
+        },
+        farm: {
+          level: null,
+          cost: {
+            wood: null, iron: null, workers: null
+          },
+          prod: null
+        }
     },
 
     // Clickables
@@ -80,6 +97,23 @@ var Engine = {
       zoomout: null,
       prodbuildings: null,
       popbuildings: null
+    },
+
+    ComputeUpgradeCost: function() {
+      // Lodge Cost Per level
+      Engine.Buildings.lodge.cost.wood = Math.round(60*Math.pow(1.5, Engine.Buildings.lodge.level)*100)/100;
+      Engine.Buildings.lodge.cost.iron = Math.round(15*Math.pow(1.5, Engine.Buildings.lodge.level)*100)/100;
+      Engine.Buildings.lodge.cost.wood += 1;
+
+      // quarry Cost Per level
+      Engine.Buildings.quarry.cost.wood = Math.round(48*Math.pow(1.6, Engine.Buildings.quarry.level)*100)/100;
+      Engine.Buildings.quarry.cost.iron = Math.round(24*Math.pow(1.6, Engine.Buildings.quarry.level)*100)/100;
+      Engine.Buildings.quarry.cost.wood += 2;
+
+      // Farm Cost Per level
+      Engine.Buildings.farm.cost.wood = Math.round(30*Math.pow(1.6, Engine.Buildings.farm.level)*100)/100;
+      Engine.Buildings.farm.cost.iron = Math.round(15*Math.pow(1.6, Engine.Buildings.farm.level)*100)/100;
+      Engine.Buildings.farm.cost.wood = 1;
     },
 
     UpdateScale: function(s) {
@@ -94,6 +128,29 @@ var Engine = {
         Engine.Display.iron.innerHTML = Engine.Ressources.iron;
         Engine.Display.wheat.innerHTML = Engine.Ressources.wheat;
         Engine.Display.workers.innerHTML = Engine.Ressources.workers;
+    },
+    DisplayProduction: function() {
+      // Level
+      Engine.Display.lodge.level.innerHTML = Engine.Buildings.lodge.level;
+      Engine.Display.quarry.level.innerHTML = Engine.Buildings.quarry.level;
+      Engine.Display.farm.level.innerHTML = Engine.Buildings.farm.level;
+      // Cost
+        // Lodge
+        Engine.Display.lodge.cost.wood.innerHTML = Engine.Buildings.lodge.cost.wood;
+        Engine.Display.lodge.cost.iron.innerHTML = Engine.Buildings.lodge.cost.iron;
+        Engine.Display.lodge.cost.workers.innerHTML = Engine.Buildings.lodge.cost.workers;
+        // Quarry
+        Engine.Display.quarry.cost.wood.innerHTML = Engine.Buildings.quarry.cost.wood;
+        Engine.Display.quarry.cost.iron.innerHTML = Engine.Buildings.quarry.cost.iron;
+        Engine.Display.quarry.cost.workers.innerHTML = Engine.Buildings.quarry.cost.workers;
+        // Farm
+        Engine.Display.farm.cost.wood.innerHTML = Engine.Buildings.farm.cost.wood;
+        Engine.Display.farm.cost.iron.innerHTML = Engine.Buildings.farm.cost.iron;
+        Engine.Display.farm.cost.workers.innerHTML = Engine.Buildings.farm.cost.workers;
+      // Level
+      Engine.Display.lodge.prod.innerHTML = Engine.Buildings.lodge.prod;
+      Engine.Display.quarry.prod.innerHTML = Engine.Buildings.quarry.prod;
+      Engine.Display.farm.prod.innerHTML = Engine.Buildings.farm.prod;
     },
 
     IdleTimer: function() {
@@ -182,11 +239,29 @@ var Engine = {
         Engine.Display.iron = document.getElementById("ironValue");
         Engine.Display.wheat = document.getElementById("wheatValue");
         Engine.Display.workers = document.getElementById("workersValue");
+
+        Engine.Display.lodge.level = document.getElementById("lodgeLevel");
+        Engine.Display.lodge.cost.wood = document.getElementById("lodgeWoodCost");
+        Engine.Display.lodge.cost.iron = document.getElementById("lodgeIronCost");
+        Engine.Display.lodge.cost.workers = document.getElementById("lodgeWorkerCost");
+        Engine.Display.lodge.prod = document.getElementById("lodgeProd");
+
+        Engine.Display.quarry.level = document.getElementById("quarryLevel");
+        Engine.Display.quarry.cost.wood = document.getElementById("quarryWoodCost");
+        Engine.Display.quarry.cost.iron = document.getElementById("quarryIronCost");
+        Engine.Display.quarry.cost.workers = document.getElementById("quarryWorkerCost");
+        Engine.Display.quarry.prod = document.getElementById("quarryProd");
+
+        Engine.Display.farm.level = document.getElementById("farmLevel");
+        Engine.Display.farm.cost.wood = document.getElementById("farmWoodCost");
+        Engine.Display.farm.cost.iron = document.getElementById("farmIronCost");
+        Engine.Display.farm.cost.workers = document.getElementById("farmWorkerCost");
+        Engine.Display.farm.prod = document.getElementById("farmProd");
+
         Engine.Display.map = document.getElementById("display");
         Engine.Display.map.width = Engine.Display.map.height *
                                     (Engine.Display.map.clientWidth / Engine.Display.map.clientHeight);
         // Hiding elements
-        document.getElementById("prodHide").style.display = 'none';
         document.getElementById("popHide").style.display = 'none';
 
         // Assigning Clickables
@@ -234,7 +309,9 @@ var Engine = {
             generator = new Utils.MidpointDisplacementMapGenerator(size, variability);
         Engine.map = generator.generate(255);
 
+        Engine.ComputeUpgradeCost();
         Engine.DisplayRessources();
+        Engine.DisplayProduction();
         Engine.IdleTimer();
         window.setInterval(Engine.Save, 15000);
         if(window.localStorage.getItem("Savefile")) Engine.Load();
